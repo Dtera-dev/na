@@ -13,14 +13,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install Qt
+    - name: Install Qt 6.9.2 MSVC with WebEngine
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.9.2'
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2022_64'
-        modules: 'webengine'
+        arch: 'win64_msvc2019_64'
+        modules: 'qtwebengine'
+
 
     - name: Build project
       shell: cmd
