@@ -1,0 +1,42 @@
+name: Build Qt Windows exe
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.9.2'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_msvc2019_64'
+        modules: 'webengine'
+
+    - name: Build project
+      shell: cmd
+      run: |
+        cd OpenBoard-master
+        qmake OpenBoard.pro
+        nmake
+
+    - name: Deploy application
+      run: |
+        mkdir deploy
+        move release/nab.exe deploy/
+        windeployqt deploy/na.exe
+
+    - name: Upload exe
+      uses: actions/upload-artifact@v3
+      with:
+        name: nab-exe
+        path: deploy/nab.exe
