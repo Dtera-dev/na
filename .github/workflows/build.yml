@@ -12,37 +12,59 @@ jobs:
     steps:
     # 1️⃣ گرفتن کدها از مخزن
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # 2️⃣ نصب Qt 6.9.2 MSVC با WebEngine
+    # 2️⃣ کلون کردن ریپازیتوری ThirdParty
+    - name: Clone ThirdParty repository
+      run: git clone https://github.com/OpenBoard-org/OpenBoard-ThirdParty.git
+
+    # 3️⃣ نصب Qt 6.9.2 MSVC با WebEngine
     - name: Install Qt 6.9.2 MSVC with WebEngine
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.8.2'
+        version: '6.9.2'
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2019_64'
+        arch: 'win64_msvc2022_64'
         modules: 'qtwebengine'
+        cache: true
+        cache-key-prefix: 'qt-6.9.2'
 
-    # 3️⃣ بیلد پروژه با qmake و nmake
+    # 4️⃣ تنظیم محیط MSVC
+    - name: Setup MSVC environment
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+
+    # 5️⃣ بیلد کتابخانه‌های ThirdParty و پروژه اصلی
     - name: Build project
       shell: cmd
       run: |
-        cd OpenBoard-master           # مسیر پروژه داخل repo
+        cd OpenBoard-ThirdParty\freetype
+        qmake freetype.pro
+        nmake
+        cd ..\quazip
+        qmake quazip.pro
+        nmake
+        cd ..\xpdf
+        qmake xpdf.pro
+        nmake
+        cd ..\..
         qmake OpenBoard.pro
         nmake
 
-    # 4️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
+    # 6️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
       shell: cmd
       run: |
         mkdir deploy
-        move release/nab.exe deploy/
-        windeployqt deploy/nab.exe
+        move build\win64\release\product\nab.exe deploy\
+        cd deploy
+        windeployqt OpenBoard.exe --qmldir ..\..\src\qml
 
-    # 5️⃣ آپلود فایل exe به عنوان artifact
+    # 7️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
-        name: OpenBoard-exe
-        path: deploy/nab.exe
+        name: nab-exe
+        path: deploy\nab.exe
