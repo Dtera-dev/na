@@ -1,4 +1,4 @@
-name: Build Qt Windows exe
+name: Build OpenBoard App exe
 
 on:
   push:
@@ -10,9 +10,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    # 1️⃣ گرفتن کدها از مخزن
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # 2️⃣ نصب Qt 6.9.2 MSVC با WebEngine
     - name: Install Qt 6.9.2 MSVC with WebEngine
       uses: jurplel/install-qt-action@v4
       with:
@@ -22,22 +24,25 @@ jobs:
         arch: 'win64_msvc2019_64'
         modules: 'qtwebengine'
 
-
+    # 3️⃣ بیلد پروژه با qmake و nmake
     - name: Build project
       shell: cmd
       run: |
-        cd OpenBoard-master
+        cd OpenBoard-master           # مسیر پروژه داخل repo
         qmake OpenBoard.pro
         nmake
 
+    # 4️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
+      shell: cmd
       run: |
         mkdir deploy
         move release/nab.exe deploy/
         windeployqt deploy/nab.exe
 
+    # 5️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
-        name: nab-exe
+        name: OpenBoard-exe
         path: deploy/nab.exe
