@@ -19,7 +19,7 @@ jobs:
         version: '6.9.2'
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2019_64'
+        arch: 'win64_msvc2022_64'
         modules: 'webengine'
 
     - name: Build project
@@ -33,10 +33,10 @@ jobs:
       run: |
         mkdir deploy
         move release/nab.exe deploy/
-        windeployqt deploy/na.exe
+        windeployqt deploy/nab.exe
 
     - name: Upload exe
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nab-exe
         path: deploy/nab.exe
