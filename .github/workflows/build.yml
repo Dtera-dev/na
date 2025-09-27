@@ -1,4 +1,5 @@
-name: Build na App exe
+```yaml
+name: Build nab App exe
 
 on:
   push:
@@ -32,12 +33,15 @@ jobs:
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-    # 4️⃣ بیلد پروژه با qmake و nmake
+    # 4️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
     - name: Build project
       shell: cmd
       run: |
-        dir OpenBoard-master
-        if not exist OpenBoard.pro echo "OpenBoard.pro not found!" && exit 1
+        dir
+        if not exist OpenBoard-master echo "OpenBoard-master folder not found!" && exit 1
+        cd OpenBoard-master
+        dir
+        if not exist OpenBoard.pro echo "OpenBoard.pro not found in OpenBoard-master!" && exit 1
         qmake OpenBoard.pro -spec win32-msvc
         nmake release
 
@@ -45,12 +49,13 @@ jobs:
     - name: Deploy application
       shell: cmd
       run: |
-        mkdir deploy
+        cd OpenBoard-master
+        mkdir ..\deploy
         dir release
-        if exist release\nab.exe move release\nab.exe deploy\
-        if not exist deploy\nab.exe echo "No nab.exe found in release!" && exit 1
-        cd deploy
-        windeployqt na.exe --release --no-translations --no-opengl-sw
+        if exist release\nab.exe move release\nab.exe ..\deploy\
+        if not exist ..\deploy\nab.exe echo "No nab.exe found in release!" && exit 1
+        cd ..\deploy
+        windeployqt nab.exe --release --no-translations --no-opengl-sw
 
     # 6️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
@@ -59,3 +64,4 @@ jobs:
         name: nab-exe
         path: deploy\nab.exe
         retention-days: 7
+```
