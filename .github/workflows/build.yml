@@ -14,32 +14,27 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2️⃣ نصب Python 3.11 (برای سازگاری بهتر با install-qt-action)
-    - name: Setup Python
-      uses: actions/setup-python@v5
+    # 2️⃣ نصب Qt 6.9.0 MSVC (به‌روزرسانی‌شده به آخرین نسخه)
+    - name: Install Qt 6.9.0 MSVC
+      uses: jurplel/install-qt-action@v4
       with:
-        python-version: '3.11'
-
-    # 3️⃣ نصب Qt 6.6.3 MSVC
-    - name: Install Qt 6.6.3 MSVC
-      uses: jurplel/install-qt-action@v4.1.0
-      with:
-        version: '6.6.3'
+        version: '6.9.0'
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2019_64'
+        arch: 'win64_msvc2022_64'
         modules: 'qtwebengine qttools'
         cache: true
-        cache-key-prefix: 'qt-6.6.3-${{ github.sha }}'
+        cache-key-prefix: 'qt-6.9.0'
+        aqtversion: '==3.1.19'  # رفع خطای Python با نسخه پایدار aqtinstall
 
-    # 4️⃣ تنظیم محیط MSVC 2019
+    # 3️⃣ تنظیم محیط MSVC 2022
     - name: Setup MSVC environment
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         echo PATH=%PATH%
 
-    # 5️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
+    # 4️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
     - name: Build project
       shell: cmd
       run: |
@@ -51,7 +46,7 @@ jobs:
         qmake OpenBoard.pro -spec win32-msvc
         nmake release
 
-    # 6️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
+    # 5️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
       shell: cmd
       run: |
@@ -63,7 +58,7 @@ jobs:
         cd ..\deploy
         windeployqt nab.exe --release --no-translations --no-opengl-sw
 
-    # 7️⃣ آپلود فایل exe به عنوان artifact
+    # 6️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
