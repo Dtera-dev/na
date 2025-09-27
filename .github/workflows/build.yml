@@ -1,4 +1,4 @@
-name: Build OpenBoard App exe
+name: Build na App exe
 
 on:
   push:
@@ -14,57 +14,48 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2️⃣ کلون کردن ریپازیتوری ThirdParty
-    - name: Clone ThirdParty repository
-      run: git clone https://github.com/OpenBoard-org/OpenBoard-ThirdParty.git
-
-    # 3️⃣ نصب Qt 6.9.2 MSVC با WebEngine
-    - name: Install Qt 6.9.2 MSVC with WebEngine
+    # 2️⃣ نصب Qt 6.5.3 MSVC
+    - name: Install Qt 6.5.3 MSVC
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.9.2'
+        version: '6.5.3'
         host: 'windows'
         target: 'desktop'
-        arch: 'win64_msvc2022_64'
-        modules: 'qtwebengine'
+        arch: 'win64_msvc2019_64'
+        modules: 'qtwebengine qttools'
         cache: true
-        cache-key-prefix: 'qt-6.9.2'
+        cache-key-prefix: 'qt-6.5.3'
 
-    # 4️⃣ تنظیم محیط MSVC
+    # 3️⃣ تنظیم محیط MSVC 2019
     - name: Setup MSVC environment
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
-    # 5️⃣ بیلد کتابخانه‌های ThirdParty و پروژه اصلی
+    # 4️⃣ بیلد پروژه با qmake و nmake
     - name: Build project
       shell: cmd
       run: |
-        cd OpenBoard-ThirdParty\freetype
-        qmake freetype.pro
-        nmake
-        cd ..\quazip
-        qmake quazip.pro
-        nmake
-        cd ..\xpdf
-        qmake xpdf.pro
-        nmake
-        cd ..\..
-        qmake OpenBoard.pro
-        nmake
+        dir OpenBoard-master
+        if not exist OpenBoard.pro echo "na.pro not found!" && exit 1
+        qmake OpenBoard.pro -spec win32-msvc
+        nmake release
 
-    # 6️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
+    # 5️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
       shell: cmd
       run: |
         mkdir deploy
-        move build\win64\release\product\nab.exe deploy\
+        dir release
+        if exist release\nab.exe move release\nab.exe deploy\
+        if not exist deploy\nab.exe echo "No nab.exe found in release!" && exit 1
         cd deploy
-        windeployqt OpenBoard.exe --qmldir ..\..\src\qml
+        windeployqt na.exe --release --no-translations --no-opengl-sw
 
-    # 7️⃣ آپلود فایل exe به عنوان artifact
+    # 6️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
         name: nab-exe
         path: deploy\nab.exe
+        retention-days: 7
