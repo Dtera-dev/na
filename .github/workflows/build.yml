@@ -36,15 +36,16 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         echo PATH=%PATH%
 
-    # 5️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
+    # 5️⃣ بیلد پروژه با qmake و nmake (در ریشه پروژه)
     - name: Build project
       shell: cmd
       run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        set QTDIR=C:\Qt\6.9.0\msvc2022_64
+        set PATH=%QTDIR%\bin;%PATH%
+        echo PATH=%PATH%
         dir
-        if not exist OpenBoard-master echo "OpenBoard-master folder not found!" && exit 1
-        cd OpenBoard-master
-        dir
-        if not exist OpenBoard.pro echo "OpenBoard.pro not found in OpenBoard-master!" && exit 1
+        if not exist OpenBoard.pro echo "OpenBoard.pro not found!" && exit 1
         qmake OpenBoard.pro -spec win32-msvc
         nmake release
 
@@ -52,12 +53,14 @@ jobs:
     - name: Deploy application
       shell: cmd
       run: |
-        cd OpenBoard-master
-        mkdir ..\deploy
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        set QTDIR=C:\Qt\6.9.0\msvc2022_64
+        set PATH=%QTDIR%\bin;%PATH%
+        mkdir deploy
         dir release
-        if exist release\nab.exe move release\nab.exe ..\deploy\
-        if not exist ..\deploy\nab.exe echo "No nab.exe found in release!" && exit 1
-        cd ..\deploy
+        if exist release\nab.exe move release\nab.exe deploy\
+        if not exist deploy\nab.exe echo "No nab.exe found in release!" && exit 1
+        cd deploy
         windeployqt nab.exe --release --no-translations --no-opengl-sw
 
     # 7️⃣ آپلود فایل exe به عنوان artifact
