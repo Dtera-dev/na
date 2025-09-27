@@ -14,27 +14,29 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2️⃣ نصب Qt 6.9.0 MSVC (به‌روزرسانی‌شده به آخرین نسخه)
-    - name: Install Qt 6.9.0 MSVC
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: '6.9.0'
-        host: 'windows'
-        target: 'desktop'
-        arch: 'win64_msvc2022_64'
-        modules: 'qtwebengine qttools'
-        cache: true
-        cache-key-prefix: 'qt-6.9.0'
-        aqtversion: '==3.1.19'  # رفع خطای Python با نسخه پایدار aqtinstall
+    # 2️⃣ نصب Python و aqtinstall (جایگزین install-qt-action برای رفع خطای Python)
+    - name: Setup Python and install aqtinstall
+      shell: cmd
+      run: |
+        python -m pip install --upgrade pip
+        pip install aqtinstall==3.3.0
 
-    # 3️⃣ تنظیم محیط MSVC 2022
+    # 3️⃣ نصب Qt 6.9.0 MSVC با aqt
+    - name: Install Qt 6.9.0 MSVC
+      shell: cmd
+      run: |
+        aqt install-qt windows desktop 6.9.0 win64_msvc2022_64 -o C:\Qt\6.9.0\msvc2022_64 --modules qtwebengine,qttools
+        set QTDIR=C:\Qt\6.9.0\msvc2022_64
+        set PATH=%QTDIR%\bin;%PATH%
+
+    # 4️⃣ تنظیم محیط MSVC 2022
     - name: Setup MSVC environment
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         echo PATH=%PATH%
 
-    # 4️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
+    # 5️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
     - name: Build project
       shell: cmd
       run: |
@@ -46,7 +48,7 @@ jobs:
         qmake OpenBoard.pro -spec win32-msvc
         nmake release
 
-    # 5️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
+    # 6️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
       shell: cmd
       run: |
@@ -58,9 +60,10 @@ jobs:
         cd ..\deploy
         windeployqt nab.exe --release --no-translations --no-opengl-sw
 
-    # 6️⃣ آپلود فایل exe به عنوان artifact
+    # 7️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
         name: nab-exe
         path: deploy\nab.exe
+        retention-days: 7
