@@ -16,7 +16,6 @@ jobs:
 
     # 2️⃣ کلون کردن ریپازیتوری ThirdParty
     - name: Clone ThirdParty repository
-      shell: cmd
       run: git clone https://github.com/OpenBoard-org/OpenBoard-ThirdParty.git
 
     # 3️⃣ نصب Python و aqtinstall
@@ -30,63 +29,63 @@ jobs:
     - name: Install Qt 5.15.2 MSVC
       shell: cmd
       run: |
-        aqt install-qt windows desktop 5.15.2 win64_msvc2019_64 -o C:\Qt\5.15.2\msvc2019_64 --modules qtwebengine qttools qtscript qtmultimedia qtdeclarative qtsvg
+        aqt install-qt --outputdir C:\Qt windows desktop 5.15.2 win64_msvc2019_64 --modules qtwebengine qttools qtscript qtmultimedia qtdeclarative qtsvg
         set QTDIR=C:\Qt\5.15.2\msvc2019_64
         set PATH=%QTDIR%\bin;%PATH%
 
-    # 5️⃣ تنظیم محیط MSVC 2019
-    - name: Setup MSVC 2019 environment
+    # 5️⃣ تنظیم محیط MSVC 2019 با action
+    - name: Setup MSVC 2019
       uses: microsoft/setup-msbuild@v2
       with:
         vs-version: '16'
 
-    - name: Setup vcvars
+    # 6️⃣ تنظیم vcvars و PATH
+    - name: Setup vcvars and PATH
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
         echo PATH=%PATH%
 
-    # 6️⃣ بیلد کتابخانه‌های ThirdParty
+    # 7️⃣ بیلد کتابخانه‌های ThirdParty
     - name: Build ThirdParty libraries
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         set QTDIR=C:\Qt\5.15.2\msvc2019_64
         set PATH=%QTDIR%\bin;%PATH%
-        cd OpenBoard-ThirdParty
-        cd freetype
-        qmake freetype.pro
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+        cd OpenBoard-ThirdParty\freetype
+        qmake freetype.pro -spec win32-msvc CONFIG+=release
         nmake
         cd ..\quazip
-        qmake quazip.pro
+        qmake quazip.pro -spec win32-msvc CONFIG+=release
         nmake
         cd ..\xpdf
-        qmake xpdf.pro
+        qmake xpdf.pro -spec win32-msvc CONFIG+=release
         nmake
 
-    # 7️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
+    # 8️⃣ بیلد پروژه با qmake و nmake (داخل پوشه OpenBoard-master)
     - name: Build project
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         set QTDIR=C:\Qt\5.15.2\msvc2019_64
         set PATH=%QTDIR%\bin;%PATH%
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
         echo PATH=%PATH%
         dir
         if not exist OpenBoard-master echo "OpenBoard-master folder not found!" && exit 1
         cd OpenBoard-master
         dir
         if not exist OpenBoard.pro echo "OpenBoard.pro not found in OpenBoard-master!" && exit 1
-        qmake OpenBoard.pro -spec win32-msvc
+        qmake OpenBoard.pro -spec win32-msvc CONFIG+=release
         nmake
 
-    # 8️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
+    # 9️⃣ جمع‌آوری فایل‌های مورد نیاز با windeployqt
     - name: Deploy application
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         set QTDIR=C:\Qt\5.15.2\msvc2019_64
         set PATH=%QTDIR%\bin;%PATH%
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
         cd OpenBoard-master
         mkdir ..\deploy
         dir build\win64\release\product
@@ -95,7 +94,7 @@ jobs:
         cd ..\deploy
         windeployqt nab.exe --release --no-translations --no-opengl-sw --qmldir ..\OpenBoard-master\resources\qml
 
-    # 9️⃣ آپلود فایل exe به عنوان artifact
+    # 10️⃣ آپلود فایل exe به عنوان artifact
     - name: Upload exe
       uses: actions/upload-artifact@v4
       with:
