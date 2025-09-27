@@ -37,7 +37,7 @@ jobs:
       shell: cmd
       run: |
         dir OpenBoard-master
-        if not exist OpenBoard.pro echo "na.pro not found!" && exit 1
+        if not exist OpenBoard.pro echo "OpenBoard.pro not found!" && exit 1
         qmake OpenBoard.pro -spec win32-msvc
         nmake release
 
